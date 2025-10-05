@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Products Manager</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .form-group {
+            margin-bottom: 10px;
+        }
+        input[type="text"], input[type="number"] {
+            width: 200px;
+            padding: 5px;
+        }
+        button {
+            padding: 6px 12px;
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Products Manager</h1>
+
+    <div>
+        <h2>Add Product</h2>
+        <input type="text" id="title" placeholder="Title">
+        <input type="number" id="cost" placeholder="Cost">
+        <button onclick="addProduct()">Add</button>
+    </div>
+
+    <div>
+        <h2>Search Products</h2>
+        <input type="text" id="searchTitle" placeholder="Search by title">
+        <button onclick="searchProducts()">Search</button>
+        <button onclick="loadAllProducts()">Show All</button>
+    </div>
+
+    <table id="productsTable">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Title</th>
+                <th>Cost</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="productsList">
+        </tbody>
+    </table>
+
+    <script>
+        const API_URL = 'http://localhost:8080/products';
+
+        async function loadAllProducts() {
+            try {
+                const response = await fetch(API_URL);
+                const products = await response.json();
+                displayProducts(products);
+            } catch (error) {
+                console.error('Error loading products:', error);
+            }
+        }
+
+        async function searchProducts() {
+            const title = document.getElementById('searchTitle').value;
+            try {
+                const response = await fetch(`${API_URL}?title=${encodeURIComponent(title)}`);
+                const products = await response.json();
+                displayProducts(products);
+            } catch (error) {
+                console.error('Error searching products:', error);
+            }
+        }
+
+        function displayProducts(products) {
+            const tbody = document.getElementById('productsList');
+            tbody.innerHTML = '';
+            products.forEach(product => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${product.id}</td>
+                    <td contenteditable="true" class="edit-field" data-field="title">${product.title}</td>
+                    <td contenteditable="true" class="edit-field" data-field="cost">${product.cost}</td>
+                    <td>
+                        <button onclick="updateProduct(${product.id})">Update</button>
+                        <button onclick="deleteProduct(${product.id})">Delete</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function addProduct() {
+            const title = document.getElementById('title').value;
+            const cost = parseInt(document.getElementById('cost').value);
+
+            if (!title || isNaN(cost)) {
+                alert('Please fill all fields');
+                return;
+            }
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ title, cost })
+                });
+                if (response.ok) {
+                    loadAllProducts();
+                    document.getElementById('title').value = '';
+                    document.getElementById('cost').value = '';
+                } else {
+                    alert('Error adding product');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        async function updateProduct(id) {
+            const row = document.querySelector(`tr:has(td:contains('${id}'))`);
+            const title = row.querySelector('[data-field="title"]').textContent;
+            const cost = parseInt(row.querySelector('[data-field="cost"]').textContent);
+
+            try {
+                const response = await fetch(`${API_URL}/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ title, cost })
+                });
+                if (response.ok) {
+                    loadAllProducts();
+                } else {
+                    alert('Error updating product');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        async function deleteProduct(id) {
+            try {
+                const response = await fetch(`${API_URL}/${id}`, {
+                    method: 'DELETE'
+                });
+                if (response.ok) {
+                    loadAllProducts();
+                } else {
+                    alert('Error deleting product');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        // Helper to support contenteditable
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('edit-field')) {
+                e.target.focus();
+            }
+        });
+
+        loadAllProducts();
+    </script>
+</body>
+</html>

@@ -2,13 +2,25 @@ spring:
     profiles:
         active: dev
     application:
-        name: "smarth"
-        version: "0.1"
+        name: BusProject
+        version: 1.0.0
 ---
 spring:
     config:
         activate:
             on-profile: dev
+    datasource:
+        url: jdbc:postgresql://localhost:5432/shop
+        username: postgres
+        password: 76384poveroZ
+        driver-class-name: org.postgresql.Driver
+        hikari:
+            maximum-pool-size: 20
+    
+    jpa:
+        database-platform: org.hibernate.dialect.PostgreSQLDialect
+        hibernate:
+            ddl-auto: update
 server:
     port: 8080
 ---
