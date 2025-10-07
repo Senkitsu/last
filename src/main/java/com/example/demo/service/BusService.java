@@ -1,54 +1,64 @@
 package com.example.demo.service;
 
 import java.util.List;
+import java.util.Optional;
 
-import org.springframework.data.domain.Pageable;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.domain.Page;
-import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.demo.model.Bus;
 import com.example.demo.repository.BusRepository;
 
-
 @Service
 public class BusService {
+
     private final BusRepository busRepository;
 
     public BusService(BusRepository busRepository) {
         this.busRepository = busRepository;
     }
-    @Cacheable(value = "buses", key = "#root.methodName")
-    public List<Bus> getAll() {
-        return busRepository.findAll();
+
+
+    public List<Bus> getAllBuses(String type, Pageable pageable) {
+        return busRepository.findAll(pageable).getContent();
     }
 
     @Cacheable(value = "bus", key = "#id")
-    public Bus getById(Long id) {
+    public Bus getBusById(Long id) {
         return busRepository.findById(id).orElse(null);
     }
 
     @Transactional
-    @CacheEvict(value = {"buses"}, allEntries = true)
-    public Bus create(Bus bus) {
+    @CacheEvict(value = "buses", allEntries = true)
+    public Bus createBus(Bus bus) {
         return busRepository.save(bus);
     }
 
     @Transactional
     @CacheEvict(value = {"buses", "bus"}, allEntries = true)
-    public Bus updateById(Long id, Bus updatedBus) {
-        return busRepository.findById(id)
-                .map(bus -> {
-                    bus.setId(updatedBus.getId());
-                    bus.setModel(updatedBus.getModel());
-                    bus.setSensors(updatedBus.getSensors());
-                    bus.setLocation(updatedBus.getLocation());
-                    bus.setMode(updatedBus.getMode());
-                    return busRepository.save(bus);
-                })
-                .orElse(null);
+    public Bus updateBus(Long id, Bus updatedBus) {
+        Optional<Bus> existingBusOpt = busRepository.findById(id);
+        if (existingBusOpt.isPresent()) {
+            Bus existingBus = existingBusOpt.get();
+            existingBus.setModel(updatedBus.getModel());
+            existingBus.setLocation(updatedBus.getLocation());
+            existingBus.setMode(updatedBus.getMode());
+            existingBus.setSensors(updatedBus.getSensors());
+            return busRepository.save(existingBus);
+        }
+        return null;
+    }
+
+    @Transactional
+    @CacheEvict(value = {"buses", "bus"}, allEntries = true)
+    public boolean deleteBus(Long id) {
+        if (busRepository.existsById(id)) {
+            busRepository.deleteById(id);
+            return true;
+        }
+        return false;
     }
 }
