@@ -9,7 +9,7 @@ public class ProductSpecification {
                 return null;
         }
             return criteriaBuilder.like(
-                criteriaBuilder.lower(root.get("title")), "%" + title.toLowerCase().trim() + "%");
+                criteriaBuilder.lower(root.get("Значение")), "%" + title.toLowerCase().trim() + "%");
         };
     }
     private static Specification<Product> priceBetween(Integer min, Integer max) {
