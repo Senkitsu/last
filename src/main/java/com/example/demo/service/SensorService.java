@@ -42,7 +42,6 @@ public class SensorService {
         Optional<Sensor> existingSensorOpt = sensorRepository.findById(id);
         if (existingSensorOpt.isPresent()) {
             Sensor existing = existingSensorOpt.get();
-            // ⚠️ НЕ обновляем ID!
             existing.setBus(updatedSensor.getBus());
             existing.setType(updatedSensor.getType());
             existing.setValue(updatedSensor.getValue());

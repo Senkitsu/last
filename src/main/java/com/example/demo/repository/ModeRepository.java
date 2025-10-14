@@ -6,11 +6,11 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
-import com.example.demo.model.Bus;
 import com.example.demo.model.Mode;
-import com.example.demo.model.Product;
 
 @Repository
-public interface ModeRepository
-            extends JpaRepository<Mode, Long> {
+public interface ModeRepository 
+        extends JpaRepository<Mode, Long>, JpaSpecificationExecutor<Mode> {
+    
+    List<Mode> findByMusicTypeContainingIgnoreCase(String musicType);
 }

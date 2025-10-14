@@ -7,9 +7,10 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 import com.example.demo.model.Bus;
-import com.example.demo.model.Product;
 
 @Repository
-public interface BusRepository
-            extends JpaRepository<Bus, Long> {
+public interface BusRepository 
+        extends JpaRepository<Bus, Long>, JpaSpecificationExecutor<Bus> {
+    
+    List<Bus> findByModelContainingIgnoreCase(String model);
 }
