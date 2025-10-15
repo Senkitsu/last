@@ -21,9 +21,9 @@ public class BusService {
         this.busRepository = busRepository;
     }
 
-
-    public List<Bus> getAllBuses(String type, Pageable pageable) {
-        return busRepository.findAll(pageable).getContent();
+    @Cacheable(value = "buses", key = "#root.methodName")
+    public List<Bus> getAllBuses() {
+        return busRepository.findAll();
     }
 
     @Cacheable(value = "bus", key = "#id")
@@ -43,10 +43,10 @@ public class BusService {
         Optional<Bus> existingBusOpt = busRepository.findById(id);
         if (existingBusOpt.isPresent()) {
             Bus existingBus = existingBusOpt.get();
+            // Обновляем ТОЛЬКО скалярные поля
             existingBus.setModel(updatedBus.getModel());
             existingBus.setLocation(updatedBus.getLocation());
-            existingBus.setMode(updatedBus.getMode());
-            existingBus.setSensors(updatedBus.getSensors());
+            // ❌ НЕ обновляем mode и sensors здесь — это отдельная логика
             return busRepository.save(existingBus);
         }
         return null;
@@ -60,5 +60,10 @@ public class BusService {
             return true;
         }
         return false;
+    }
+
+    public List<Bus> getAllBuses(String type, Pageable pageable) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getAllBuses'");
     }
 }

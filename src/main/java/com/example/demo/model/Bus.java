@@ -1,29 +1,28 @@
 package com.example.demo.model;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 import com.example.demo.enums.SensorType;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import jakarta.persistence.*;
+import lombok.*;
+
+@Entity
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Entity
 public class Bus {
     @Id
     private Long id; 
+
     private String model;
-    @OneToMany
+
+    @OneToMany(mappedBy = "bus", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Sensor> sensors; 
+
     private String location; 
-    @OneToOne
+
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "mode_id")
     private Mode mode;
 }

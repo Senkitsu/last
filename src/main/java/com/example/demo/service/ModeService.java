@@ -5,7 +5,6 @@ import java.util.Optional;
 
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,11 +23,6 @@ public class ModeService {
     @Cacheable(value = "modes", key = "#root.methodName")
     public List<Mode> getAll() {
         return modeRepository.findAll();
-    }
-
-
-    public List<Mode> getAll(Pageable pageable) {
-        return modeRepository.findAll(pageable).getContent();
     }
 
     @Cacheable(value = "mode", key = "#id")

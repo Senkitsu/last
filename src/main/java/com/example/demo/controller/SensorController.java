@@ -27,9 +27,10 @@ public class SensorController {
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
-    @GetMapping
-    public List<Sensor> getAllSensors() {
-        return sensorService.getAll();
+    @GetMapping("/analyze")
+    public ResponseEntity<String> analyzeClimate() {
+        String result = sensorService.analyzeClimate();
+        return ResponseEntity.ok(result);
     }
 
     @GetMapping("/{id}")

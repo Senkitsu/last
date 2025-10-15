@@ -8,6 +8,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.demo.enums.SensorType;
 import com.example.demo.model.Sensor;
 import com.example.demo.repository.SensorRepository;
 
@@ -59,5 +60,54 @@ public class SensorService {
             return true;
         }
         return false;
+    }
+
+    // Вспомогательный метод: получить сенсор по строковому типу
+    private Sensor getSensorByTypeString(String typeStr) {
+        try {
+            SensorType type = SensorType.valueOf(typeStr.toUpperCase());
+            List<Sensor> sensors = sensorRepository.findByType(type);
+            return sensors.isEmpty() ? null : sensors.get(0);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    // Анализ климата
+    public String analyzeClimate() {
+        StringBuilder actions = new StringBuilder();
+
+        Sensor co2 = getSensorByTypeString("CO2");
+        Sensor humidity = getSensorByTypeString("HUMIDITY");
+        Sensor temp = getSensorByTypeString("TEMP");
+        Sensor light = getSensorByTypeString("LIGHT");
+
+        if (co2 != null && co2.getValue() != null && co2.getValue() >= 1200) {
+            actions.append("Добавить кислород. ");
+        }
+
+        if (humidity != null && humidity.getValue() != null) {
+            double h = humidity.getValue();
+            if (h < 30) {
+                actions.append("Включить увлажнитель воздуха. ");
+            } else if (h > 60) {
+                actions.append("Включить вытяжку. ");
+            }
+        }
+
+        if (temp != null && temp.getValue() != null) {
+            double t = temp.getValue();
+            if (t > 28) {
+                actions.append("Включить кондиционер. ");
+            } else if (t < 15) {
+                actions.append("Включить обогреватель. ");
+            }
+        }
+
+        if (light != null && light.getValue() != null && light.getValue() < 30) {
+            actions.append("Включить дополнительное освещение. ");
+        }
+
+        return actions.length() == 0 ? "Все параметры в норме." : actions.toString().trim();
     }
 }

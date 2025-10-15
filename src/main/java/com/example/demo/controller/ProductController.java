@@ -36,7 +36,11 @@ public class ProductController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Product> getProductById(@PathVariable Long id) {
+    public ResponseEntity<?> getProductById(@PathVariable Long id) {
+        if (id == null || id <= 0) {
+            return ResponseEntity.badRequest()
+                    .body("Некорректный идентификатор товара: ID должен быть положительным числом.");
+        }
         Product product = productService.getById(id);
         return product != null ? ResponseEntity.ok(product) : ResponseEntity.notFound().build();
     }
@@ -47,24 +51,32 @@ public class ProductController {
     }
 
     @GetMapping("/filter")
-    public Page<Product> filterProducts(
+    public ResponseEntity<Page<Product>> filterProducts(
             @RequestParam(required = false) String title,
             @RequestParam(required = false) Integer min,
             @RequestParam(required = false) Integer max,
             @PageableDefault(size = 20) Pageable pageable) {
-        return productService.getByFilter(title, min, max, pageable);
+        return ResponseEntity.ok(productService.getByFilter(title, min, max, pageable));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Product> updateProduct(
+    public ResponseEntity<?> updateProduct(
             @PathVariable Long id,
             @Valid @RequestBody Product updatedProduct) {
+        if (id == null || id <= 0) {
+            return ResponseEntity.badRequest()
+                    .body("Некорректный идентификатор товара: ID должен быть положительным числом.");
+        }
         Product product = productService.updateById(id, updatedProduct);
         return product != null ? ResponseEntity.ok(product) : ResponseEntity.notFound().build();
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
+    public ResponseEntity<?> deleteProduct(@PathVariable Long id) {
+        if (id == null || id <= 0) {
+            return ResponseEntity.badRequest()
+                    .body("Некорректный идентификатор товара: ID должен быть положительным числом.");
+        }
         boolean deleted = productService.deleteById(id);
         return deleted ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
     }

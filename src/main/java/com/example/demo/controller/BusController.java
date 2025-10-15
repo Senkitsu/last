@@ -36,7 +36,11 @@ public class BusController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Bus> getBusById(@PathVariable Long id) {
+    public ResponseEntity<?> getBusById(@PathVariable Long id) {
+        if (id == null || id <= 0) {
+            return ResponseEntity.badRequest()
+                    .body("Некорректный идентификатор автобуса: ID должен быть положительным числом.");
+        }
         Bus bus = busService.getBusById(id);
         if (bus != null) {
             return ResponseEntity.ok(bus);
@@ -46,7 +50,11 @@ public class BusController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Bus> updateBus(@PathVariable Long id, @Valid @RequestBody Bus updatedBus) {
+    public ResponseEntity<?> updateBus(@PathVariable Long id, @Valid @RequestBody Bus updatedBus) {
+        if (id == null || id <= 0) {
+            return ResponseEntity.badRequest()
+                    .body("Некорректный идентификатор автобуса: ID должен быть положительным числом.");
+        }
         Bus bus = busService.updateBus(id, updatedBus);
         if (bus != null) {
             return ResponseEntity.ok(bus);
@@ -56,7 +64,11 @@ public class BusController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteBus(@PathVariable Long id) {
+    public ResponseEntity<?> deleteBus(@PathVariable Long id) {
+        if (id == null || id <= 0) {
+            return ResponseEntity.badRequest()
+                    .body("Некорректный идентификатор автобуса: ID должен быть положительным числом.");
+        }
         boolean deleted = busService.deleteBus(id);
         if (deleted) {
             return ResponseEntity.noContent().build();

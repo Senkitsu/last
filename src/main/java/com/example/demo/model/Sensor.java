@@ -4,23 +4,22 @@ import java.time.LocalDateTime;
 
 import com.example.demo.enums.SensorType;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToOne;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-@NoArgsConstructor
-@AllArgsConstructor
+import jakarta.persistence.*;
+import lombok.*;
+
 @Entity
 @Data
-public class Sensor 
-{
+@NoArgsConstructor
+@AllArgsConstructor
+public class Sensor {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY) // ← добавлено!
     private Long id; 
+
     @ManyToOne
+    @JoinColumn(name = "bus_id")
     private Bus bus; 
+
     private SensorType type; 
     private Double value; 
     private LocalDateTime timestamp; 
