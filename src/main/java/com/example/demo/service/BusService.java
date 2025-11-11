@@ -46,7 +46,6 @@ public class BusService {
             // Обновляем ТОЛЬКО скалярные поля
             existingBus.setModel(updatedBus.getModel());
             existingBus.setLocation(updatedBus.getLocation());
-            // ❌ НЕ обновляем mode и sensors здесь — это отдельная логика
             return busRepository.save(existingBus);
         }
         return null;
