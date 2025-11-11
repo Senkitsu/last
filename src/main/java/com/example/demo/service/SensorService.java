@@ -110,4 +110,9 @@ public class SensorService {
 
         return actions.length() == 0 ? "Все параметры в норме." : actions.toString().trim();
     }
+
+    @Transactional
+    public void saveAll(List<Sensor> sensors) {
+        sensorRepository.saveAll(sensors);
+    }
 }

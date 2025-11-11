@@ -21,6 +21,12 @@ public class SensorController {
         this.sensorService = sensorService;
     }
 
+    @PostMapping("/data")
+    public ResponseEntity<Void> receiveSensorData(@RequestBody List<Sensor> sensors) {
+    sensorService.saveAll(sensors);
+    return ResponseEntity.ok().build();
+    }
+
     @PostMapping
     public ResponseEntity<Sensor> createSensor(@Valid @RequestBody Sensor sensor) {
         Sensor created = sensorService.create(sensor);

@@ -1,19 +1,31 @@
 package com.example.demo.enums;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum ModeType {
-    ECO, AUTO, COMFORT;
+    AUTO("auto"),
+    ECO("eco"),
+    COMFORT("comfort");
+
+    private final String value;
+
+    ModeType(String value) {
+        this.value = value;
+    }
+
+    @JsonValue
+    public String getValue() {
+        return value;
+    }
 
     @JsonCreator
     public static ModeType fromString(String value) {
-        if (value == null || value.isBlank()) {
-            return null;
+        for (ModeType type : ModeType.values()) {
+            if (type.value.equalsIgnoreCase(value)) {
+                return type;
+            }
         }
-        try {
-            return ModeType.valueOf(value.trim().toUpperCase());
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Недопустимый режим: " + value + ". Допустимые: ECO, AUTO, COMFORT");
-        }
+        throw new IllegalArgumentException("Unknown ModeType: " + value);
     }
 }
