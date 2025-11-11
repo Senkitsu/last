@@ -12,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.demo.model.Product;
 import com.example.demo.repository.ProductRepository;
-import com.example.demo.specifications.ProductSpecification;
 
 @Service
 @Transactional(readOnly = true)
@@ -70,15 +69,4 @@ public class ProductService {
         return productRepository.findByTitleContainingIgnoreCase(title.trim());
     }
 
-    public Page<Product> getByFilter(
-            String title,
-            Integer minCost,
-            Integer maxCost,
-            Pageable pageable) {
-
-        return productRepository.findAll(
-                ProductSpecification.filter(title, minCost, maxCost),
-                pageable
-        );
     }
-}

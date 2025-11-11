@@ -61,9 +61,4 @@ public class BusService {
         }
         return false;
     }
-
-    public List<Bus> getAllBuses(String type, Pageable pageable) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getAllBuses'");
-    }
 }

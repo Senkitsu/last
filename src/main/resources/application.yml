@@ -30,3 +30,16 @@ spring:
             on-profile: prod
 server:
     port: 9001
+
+jwt:
+    secret: XXX
+    access:
+        cookie_name: access_token
+        duration:
+            minute: 5
+            second: 300
+    refresh:
+        cookie_name: refresh_token
+        duration:
+            day: 7
+            second: 604800

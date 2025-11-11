@@ -32,7 +32,7 @@ public class BusController {
     public List<Bus> getAllBuses(
             @PageableDefault(size = 20) Pageable pageable,
             @RequestParam(required = false) String type) {
-        return busService.getAllBuses(type, pageable);
+        return busService.getAllBuses();
     }
 
     @GetMapping("/{id}")
