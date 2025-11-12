@@ -1,4 +1,4 @@
-package com.example.demo.jwt;
+package com.example.demo.security;
 
 import java.time.LocalDateTime;
 import java.time.temporal.TemporalUnit;

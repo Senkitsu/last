@@ -60,5 +60,15 @@ public class User implements UserDetails {
 
     }
 
+    public Iterable<GrantedAuthority> getRoles() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getRoles'");
+    }
+
+    public void setEnabled(boolean b) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'setEnabled'");
+    }
+
 
 }

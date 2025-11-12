@@ -1,4 +1,4 @@
-package com.example.demo.jwt;
+package com.example.demo.security;
 
 import java.security.Key;
 import java.time.LocalDateTime;
