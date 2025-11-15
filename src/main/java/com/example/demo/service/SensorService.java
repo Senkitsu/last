@@ -38,7 +38,7 @@ public class SensorService {
     }
 
     @Transactional
-    @CacheEvict(value = {"sensors", "sensor"}, allEntries = true)
+    @CacheEvict(value = { "sensors", "sensor" }, allEntries = true)
     public Sensor updateById(Long id, Sensor updatedSensor) {
         Optional<Sensor> existingSensorOpt = sensorRepository.findById(id);
         if (existingSensorOpt.isPresent()) {
@@ -53,7 +53,7 @@ public class SensorService {
     }
 
     @Transactional
-    @CacheEvict(value = {"sensors", "sensor"}, allEntries = true)
+    @CacheEvict(value = { "sensors", "sensor" }, allEntries = true)
     public boolean deleteById(Long id) {
         if (sensorRepository.existsById(id)) {
             sensorRepository.deleteById(id);
@@ -114,5 +114,15 @@ public class SensorService {
     @Transactional
     public void saveAll(List<Sensor> sensors) {
         sensorRepository.saveAll(sensors);
+    }
+
+    public Sensor addFileToSensorData(Long id, String filePath) {
+        Optional<Sensor> existingSensorOpt = sensorRepository.findById(id);
+        if (existingSensorOpt.isPresent()) {
+            Sensor existing = existingSensorOpt.get();
+            existing.setPdf(filePath);
+            return sensorRepository.save(existing);
+        }
+        return null;
     }
 }

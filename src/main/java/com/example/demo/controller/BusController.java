@@ -11,6 +11,9 @@ import org.springframework.web.bind.annotation.*;
 import com.example.demo.model.Bus;
 import com.example.demo.service.BusService;
 import jakarta.validation.Valid;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+
 
 @RestController
 @RequestMapping("/api/buses")
@@ -76,4 +79,6 @@ public class BusController {
             return ResponseEntity.notFound().build();
         }
     }
+
+    
 }

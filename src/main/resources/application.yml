@@ -1,45 +1,21 @@
 spring:
-    profiles:
-        active: dev
-    application:
-        name: BusProject
-        version: 1.0.0
----
-spring:
-    config:
-        activate:
-            on-profile: dev
-    datasource:
-        url: jdbc:postgresql://localhost:5432/shop
-        username: postgres
-        password: 76384poveroZ
-        driver-class-name: org.postgresql.Driver
-        hikari:
-            maximum-pool-size: 20
-    
-    jpa:
-        database-platform: org.hibernate.dialect.PostgreSQLDialect
-        hibernate:
-            ddl-auto: update
+  datasource:
+    url: jdbc:postgresql://localhost:5432/shop
+    username: postgres
+    password: 76384poveroZ
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+
 server:
-    port: 8080
----
-spring:
-    config:
-        activate:
-            on-profile: prod
-server:
-    port: 9001
+  servlet:
+    session:
+      cookie:
+        secure: false
 
 jwt:
-    secret: XXX
-    access:
-        cookie_name: access_token
-        duration:
-            minute: 5
-            second: 300
-    refresh:
-        cookie_name: refresh_token
-        duration:
-            day: 7
-            second: 604800
+  tokenSecret: "66546A555E5A7234753778214123222A472D4B614E645262356B587032733576"
+  accessTokenDurationSecond: 3600
+  accessCookieName: "jwt"

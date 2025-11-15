@@ -1,4 +1,3 @@
-// src/main/java/com/example/demo/service/UserService.java
 package com.example.demo.service;
 
 import com.example.demo.model.User;
@@ -20,21 +19,6 @@ public class UserService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    // Для аутентификации (загрузка по username)
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
-        return org.springframework.security.core.userdetails.User
-                .withUsername(user.getUsername())
-                .password(user.getPassword())
-                .authorities("ROLE_USER") // или динамически из ролей
-                .accountExpired(false)
-                .accountLocked(false)
-                .disabled(!user.isEnabled())
-                .build();
-    }
-
-    // Для регистрации
     public User register(User user) {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setEnabled(true);
@@ -42,6 +26,6 @@ public class UserService {
     }
 
     public Optional<User> findByUsername(String username) {
-        return userRepository.findByUsername(username);
+        return userRepository.findByUsername(username); // ✅ теперь есть
     }
 }

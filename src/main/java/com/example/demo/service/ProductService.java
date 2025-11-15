@@ -11,7 +11,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.example.demo.model.Product;
+import com.example.demo.model.Sensor;
 import com.example.demo.repository.ProductRepository;
+import com.example.demo.repository.SensorRepository;
 
 @Service
 @Transactional(readOnly = true)

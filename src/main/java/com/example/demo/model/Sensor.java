@@ -23,4 +23,5 @@ public class Sensor {
     private SensorType type; 
     private Double value; 
     private LocalDateTime timestamp; 
+    private String pdf;
 }

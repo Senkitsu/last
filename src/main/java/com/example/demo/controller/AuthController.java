@@ -6,12 +6,12 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.*;
 
-import com.example.demo.security.JwtUtil;
+import com.example.demo.jwt.JwtUtil;
 
 @RestController
 @RequestMapping("/auth")
@@ -21,7 +21,7 @@ public class AuthController {
     private AuthenticationManager authenticationManager;
 
     @Autowired
-    private JwtUtil jwtUtil;  // ✅ ИСПРАВЛЕНО: jwtUtil (со строчной буквы!)
+    private JwtUtil jwtUtil;
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(
@@ -29,43 +29,40 @@ public class AuthController {
             HttpServletResponse response) {
 
         try {
-            Authentication authentication = authenticationManager.authenticate(
+            Authentication auth = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             request.getUsername(),
                             request.getPassword()
                     )
             );
 
-            String username = authentication.getName();
-            String jwt = jwtUtil.generateToken(username);  // ✅ Теперь правильно
+            String username = auth.getName();
+            String jwt = jwtUtil.generateToken(username);
 
-            Cookie jwtCookie = new Cookie("jwt", jwt);
-            jwtCookie.setHttpOnly(true);
-            jwtCookie.setSecure(false);  // для localhost
-            jwtCookie.setPath("/");
-            jwtCookie.setMaxAge(3600);
-            response.addCookie(jwtCookie);
+            // 🔹 Устанавливаем JWT в HttpOnly Cookie
+            Cookie cookie = new Cookie("jwt", jwt);
+            cookie.setHttpOnly(true);
+            cookie.setSecure(false);  // ← false для localhost
+            cookie.setPath("/");
+            cookie.setMaxAge(3600);   // 1 час
+            response.addCookie(cookie);
 
             return ResponseEntity.ok(new LoginResponse("Login successful", username));
 
-        } catch (BadCredentialsException e) {
+        } catch (AuthenticationException e) {
             return ResponseEntity.status(401)
                     .body(new LoginResponse("Invalid username or password", null));
-        } catch (Exception e) {
-            return ResponseEntity.status(400)
-                    .body(new LoginResponse("Authentication failed: " + e.getMessage(), null));
         }
     }
 
     @PostMapping("/logout")
     public ResponseEntity<LoginResponse> logout(HttpServletResponse response) {
-        Cookie jwtCookie = new Cookie("jwt", null);
-        jwtCookie.setHttpOnly(true);
-        jwtCookie.setSecure(false);
-        jwtCookie.setPath("/");
-        jwtCookie.setMaxAge(0);
-        response.addCookie(jwtCookie);
-
+        Cookie cookie = new Cookie("jwt", null);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(false);
+        cookie.setPath("/");
+        cookie.setMaxAge(0);
+        response.addCookie(cookie);
         return ResponseEntity.ok(new LoginResponse("Logout successful", null));
     }
 
