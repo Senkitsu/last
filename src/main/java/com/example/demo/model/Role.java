@@ -2,7 +2,6 @@ package com.example.demo.model;
 
 import java.util.Set;
 
-import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.security.core.GrantedAuthority;
 
 import jakarta.persistence.Entity;
@@ -15,25 +14,26 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+@Entity
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Entity
-public class Role implements GrantedAuthority {
+public class Role implements GrantedAuthority{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String name;
 
-    @ManyToMany
-    private Set<Permission> permissions;
+    private String name;
 
     @OneToMany
     private Set<User> users;
 
+    @ManyToMany
+    private Set<Permission> permissions;
+
     @Override
-    public String getAuthority()
-    {
-        return name.toUpperCase();
+    public String getAuthority() {
+        return this.name.toUpperCase();
     }
+
 }

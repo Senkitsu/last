@@ -1,63 +1,125 @@
 package com.example.demo.service;
 
-import java.util.List;
-import java.util.Optional;
-
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import com.example.demo.model.Mode;
+import com.example.demo.model.*;
 import com.example.demo.repository.ModeRepository;
+import com.example.demo.repository.ModeRuleRepository;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.regex.Pattern;
 
 @Service
 public class ModeService {
-
     private final ModeRepository modeRepository;
-
-    public ModeService(ModeRepository modeRepository) {
+    private final ModeRuleRepository modeRuleRepository;
+    private final DeviceControlService deviceControlService;
+    
+    public ModeService(ModeRepository modeRepository, 
+                      ModeRuleRepository modeRuleRepository,
+                      DeviceControlService deviceControlService) {
         this.modeRepository = modeRepository;
+        this.modeRuleRepository = modeRuleRepository;
+        this.deviceControlService = deviceControlService;
     }
 
-    @Cacheable(value = "modes", key = "#root.methodName")
-    public List<Mode> getAll() {
-        return modeRepository.findAll();
+    // активация режима по заданному правилу
+    public String activateMode(ModeType modeType) {
+        List<ModeRule> rules = modeRuleRepository.findByModeTypeOrderByPriorityDesc(modeType);
+        
+        if (rules.isEmpty()) {
+            return "Для данного режима не настроены правила";
+        }
+
+        List<Device> allDevices = deviceControlService.getAllDevices();
+        
+        int devicesChanged = 0;
+        for (Device device : allDevices) {
+            Boolean shouldBeActive = evaluateDeviceState(device, rules);
+            if (shouldBeActive != null && device.isActive() != shouldBeActive) {
+                deviceControlService.toggleDevice(device.getId(), shouldBeActive);
+                devicesChanged++;
+            }
+        }
+
+        return String.format("Режим '%s' активирован. Изменено устройств: %d", modeType, devicesChanged);
     }
 
-    @Cacheable(value = "mode", key = "#id")
-    public Mode getById(Long id) {
-        return modeRepository.findById(id).orElse(null);
+    // отключаем все устройства кроме климат-контроля
+    public String activateNightMode() {
+        List<Device> allDevices = deviceControlService.getAllDevices();
+        int devicesTurnedOff = 0;
+        
+        for (Device device : allDevices) {
+            boolean isClimateDevice = device.getType() == DeviceType.CONDITIONER;
+            
+            if (!isClimateDevice && device.isActive()) {
+                deviceControlService.toggleDevice(device.getId(), false);
+                devicesTurnedOff++;
+            }
+        }
+        
+        return String.format("Ночной режим активирован. Выключено устройств: %d", devicesTurnedOff);
     }
 
-    @Transactional
-    @CacheEvict(value = "modes", allEntries = true)
-    public Mode create(Mode mode) {
-        return modeRepository.save(mode);
+    // отключаем все устройства
+    public String turnOffAllDevices() {
+        List<Device> allDevices = deviceControlService.getAllDevices();
+        int devicesTurnedOff = 0;
+        
+        for (Device device : allDevices) {
+            if (device.isActive()) {
+                deviceControlService.toggleDevice(device.getId(), false);
+                devicesTurnedOff++;
+            }
+        }
+        
+        return String.format("Все устройства выключены. Отключено: %d", devicesTurnedOff);
     }
 
-    @Transactional
-    @CacheEvict(value = {"modes", "mode"}, allEntries = true)
-    public Mode updateById(Long id, Mode updatedMode) {
-        Optional<Mode> existingModeOpt = modeRepository.findById(id);
-        if (existingModeOpt.isPresent()) {
-            Mode existingMode = existingModeOpt.get();
-            existingMode.setMusicType(updatedMode.getMusicType());
-            existingMode.setTargetTemp(updatedMode.getTargetTemp());
-            existingMode.setTargetHumidity(updatedMode.getTargetHumidity());
-            existingMode.setTargetCo2(updatedMode.getTargetCo2());
-            return modeRepository.save(existingMode);
+    // включение всех устройств
+    public String turnOnAllDevices() {
+        List<Device> allDevices = deviceControlService.getAllDevices();
+        int devicesTurnedOn = 0;
+        
+        for (Device device : allDevices) {
+            if (!device.isActive()) {
+                deviceControlService.toggleDevice(device.getId(), true);
+                devicesTurnedOn++;
+            }
+        }
+        
+        return String.format("Все устройства включены. Включено: %d", devicesTurnedOn);
+    }
+
+
+    private Boolean evaluateDeviceState(Device device, List<ModeRule> rules) {
+        for (ModeRule rule : rules) {
+            if (matchesRule(device, rule)) {
+                return rule.getShouldBeActive();
+            }
         }
         return null;
     }
 
-    @Transactional
-    @CacheEvict(value = {"modes", "mode"}, allEntries = true)
-    public boolean deleteMode(Long id) {
-        if (modeRepository.existsById(id)) {
-            modeRepository.deleteById(id);
-            return true;
+    private boolean matchesRule(Device device, ModeRule rule) {
+        if (rule.getDeviceType() != null && device.getType() != rule.getDeviceType()) {
+            return false;
         }
-        return false;
+
+        if (rule.getTitlePattern() != null && !rule.getTitlePattern().isEmpty()) {
+            Pattern pattern = Pattern.compile(rule.getTitlePattern(), Pattern.CASE_INSENSITIVE);
+            if (!pattern.matcher(device.getTitle()).find()) {
+                return false;
+            }
+        }
+
+        if (rule.getMinPower() != null && device.getPower() < rule.getMinPower()) {
+            return false;
+        }
+        if (rule.getMaxPower() != null && device.getPower() > rule.getMaxPower()) {
+            return false;
+        }
+
+        return true;
     }
 }
