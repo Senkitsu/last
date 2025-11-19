@@ -15,7 +15,7 @@ import org.springframework.cglib.core.Local;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
-import com.example.demo.enums.TokenType;
+import com.example.demo.model.TokenType;
 import com.example.demo.model.Token;
 
 import io.jsonwebtoken.Claims;

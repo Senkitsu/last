@@ -21,7 +21,7 @@ import lombok.RequiredArgsConstructor;
 
 @Component
 @RequiredArgsConstructor
-public class JwtAuthenticationFilter extends OncePerRequestFilter{
+public class JwtAuthFilter extends OncePerRequestFilter{
 
     @Value("${jwt.access.name}")
     private String accessCookieName;
@@ -34,7 +34,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter{
         String token = "";
         Cookie[] cookies = request.getCookies();
 
-        if (cookies != null) {
+        if (cookies != null) {  // ← ДОБАВЬ ЭТУ ПРОВЕРКУ!
             for (Cookie cookie: cookies) {
                 if (accessCookieName.equals(cookie.getName())) {
                     token = cookie.getValue();
