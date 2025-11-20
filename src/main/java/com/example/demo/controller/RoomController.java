@@ -38,6 +38,7 @@ public class RoomController {
         String username = authentication.getName();
         User user = userService.getUserByUsername(username);
         
+        // ✅ USER видит только свои комнаты, ADMIN - все
         if (user.getRole().getName().equals("USER")) {
             return roomService.getRoomsByManager(user.getId());
         } else {
@@ -96,7 +97,6 @@ public class RoomController {
         }
     }
     
-    // DELETE /api/rooms/{id} - удалить комнату
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteRoom(@PathVariable Long id) {
         boolean deleted = roomService.deleteRoom(id);

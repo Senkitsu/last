@@ -13,7 +13,7 @@ public class ModeService {
     private final ModeRepository modeRepository;
     private final ModeRuleRepository modeRuleRepository;
     private final DeviceControlService deviceControlService;
-    
+
     public ModeService(ModeRepository modeRepository, 
                       ModeRuleRepository modeRuleRepository,
                       DeviceControlService deviceControlService) {
