@@ -1,44 +1,39 @@
 package com.example.demo.service;
 
-import com.example.demo.model.User;
-import com.example.demo.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collection;
-import java.util.stream.Collectors;
+import com.example.demo.exception.ResourceNotFoundException;
+import com.example.demo.model.User;
+import com.example.demo.repository.UserRepository;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Service
-public class UserDetailsServiceImpl implements UserDetailsService {
-
+@RequiredArgsConstructor
+public class UserDetailsServiceImpl implements UserDetailsService{
+    private final UserRepository userRepository;
     private static final Logger logger = LoggerFactory.getLogger(UserDetailsServiceImpl.class);
 
-    @Autowired
-    private UserRepository userRepository;
-
     @Override
+    @Transactional
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.findByUsernameWithRolesAndPermissions(username) // ✅ JOIN FETCH
-                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
-
-        Collection<SimpleGrantedAuthority> authorities = user.getRoles().stream() // ✅
-                .flatMap(role -> role.getPermissions().stream())
-                .map(permission -> new SimpleGrantedAuthority(permission.getTitle()))
-                .collect(Collectors.toList());
-
-        return org.springframework.security.core.userdetails.User
-                .withUsername(user.getUsername())
-                .password(user.getPassword())
-                .authorities(authorities)
-                .accountExpired(false)
-                .accountLocked(false)
-                .disabled(!user.isEnabled())
-                .build();
+        logger.debug("Loading user by username: {}", username);
+        User user = userRepository.findByUsername(username)
+            .orElseThrow(() -> new ResourceNotFoundException("User not found:" + username));
+        
+        
+        if (user.getRole() != null && user.getRole().getPermissions() != null) {
+            user.getRole().getPermissions().size();
+        }
+        
+        return user;
     }
 }
