@@ -1,0 +1,32 @@
+jwt:
+    secret: 66546A555E5A7234753778214123222A472D4B614E645262356B587032733576
+    access:
+        cookie_name: access_token
+        duration:
+            minute: 60
+            second: 3600
+    refresh:
+        cookie_name: refresh_token
+        duration:
+            day: 7
+            second: 604800
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: password
+  
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+  
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
