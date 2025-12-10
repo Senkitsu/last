@@ -31,6 +31,9 @@ public class JwtTokenProvider {
     @Value("${jwt.secret}")
     private String secret;
 
+    @Value("${jwt.expiration}")
+    private long jwtExpiration;
+
     public Token generateAccessToken(
         Map<String, Object> extractClaims,
         Long duration,
