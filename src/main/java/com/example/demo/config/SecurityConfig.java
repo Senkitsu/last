@@ -25,7 +25,9 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SecurityConfig {
     private static final String[] ALLOWED_URLS =
-    {"/swagger-ui/**", "/v3/api-docs/**", "/error", "/api/auth/**", "/api/auth/login"};
+    {"/swagger-ui/**", "/v3/api-docs/**", "/error", "/api/auth/**", 
+     "/api/auth/login", "/api/users/create-first", "/products"}; // ← ДОБАВЬТЕ /h2-console/**
+
     private final JwtAuthFilter jFilter;
     private final JwtAuthEntryPoint jPoint;
 
@@ -40,9 +42,10 @@ public class SecurityConfig {
     SecurityFilterChain securityFilterChain (HttpSecurity httpSecurity) throws Exception {
         httpSecurity.csrf(AbstractHttpConfigurer::disable);
         httpSecurity.authorizeHttpRequests(authorize -> {
-            // ✅ ПРАВА ДОСТУПА:
-            authorize.requestMatchers("/api/auth/**").permitAll();
+            // ✅ ПУБЛИЧНЫЕ ЭНДПОИНТЫ (без авторизации):
             authorize.requestMatchers(ALLOWED_URLS).permitAll();
+            
+            // ✅ ПРАВА ДОСТУПА:
             // Devices - USER может только читать, ADMIN - все
             authorize.requestMatchers(HttpMethod.GET, "/api/devices", "/api/devices/**")
                     .hasAnyAuthority("DEVICE:READ", "DEVICE:WRITE");
@@ -63,15 +66,18 @@ public class SecurityConfig {
             // Modes - только контроль
             authorize.requestMatchers("/api/modes/**").hasAuthority("MODE:CONTROL");
             
-            // Users - только админ
+            // Users - только админ (кроме /create-first)
             authorize.requestMatchers("/api/users/**").hasAuthority("USER:WRITE");
             
             // Mode rules - только админ
             authorize.requestMatchers("/api/mode-rules/**").hasAuthority("DEVICE:WRITE");
             
+            // Files
             authorize.requestMatchers(HttpMethod.GET, "/api/files", "/api/files/**").hasAnyAuthority("FILE:READ");
             authorize.requestMatchers(HttpMethod.POST, "/api/files").hasAuthority("FILE:WRITE");
             authorize.requestMatchers(HttpMethod.DELETE, "/api/files/**").hasAuthority("FILE:WRITE");
+            
+            // CSV импорт
             authorize.requestMatchers(HttpMethod.POST, "/api/devices/upload-csv").hasAuthority("DEVICE:WRITE");
             authorize.requestMatchers(HttpMethod.POST, "/api/import/**").hasAuthority("DEVICE:WRITE");
 
@@ -83,6 +89,11 @@ public class SecurityConfig {
         ));
         httpSecurity.exceptionHandling(exception -> exception.authenticationEntryPoint(jPoint));
         httpSecurity.addFilterBefore(jFilter, UsernamePasswordAuthenticationFilter.class);
+        
+        // Разрешаем фреймы для H2 Console
+        httpSecurity.headers(headers -> headers
+            .frameOptions(frame -> frame.sameOrigin())
+        );
         
         return httpSecurity.build();
     }

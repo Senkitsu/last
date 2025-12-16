@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -36,6 +37,7 @@ public class UserController {
 
     // GET /api/users - получить всех пользователей
     @GetMapping
+    @PreAuthorize("hasAuthority('USER:WRITE')")
     public ResponseEntity<List<UserResponseDto>> getAllUsers() {
         logger.info("Getting all users");
         try {
@@ -52,6 +54,7 @@ public class UserController {
 
     // GET /api/users/{id} - получить пользователя по ID
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('USER:WRITE')")
     public ResponseEntity<UserResponseDto> getUserById(@PathVariable Long id) {
         logger.debug("GET /api/users/{}", id);
         try {
@@ -70,6 +73,7 @@ public class UserController {
 
     // POST /api/users - создать пользователя (основной метод)
     @PostMapping
+    @PreAuthorize("hasAuthority('USER:WRITE')")
     public ResponseEntity<UserResponseDto> createUser(@RequestBody UserCreateDto userCreateDto) {
         logger.debug("POST /api/users - {}", userCreateDto);
         try {
@@ -85,25 +89,44 @@ public class UserController {
         }
     }
 
-    // POST /api/users/create - альтернативный метод создания
-    @PostMapping("/create")
-    public ResponseEntity<UserResponseDto> createUserAlternative(@RequestBody UserCreateDto userCreateDto) {
-        logger.debug("POST /api/users/create - {}", userCreateDto);
+    // POST /api/users/create-first - создать первого пользователя (публичный доступ)
+    @PostMapping("/create-first")
+    public ResponseEntity<UserResponseDto> createFirstUser(@RequestBody UserCreateDto userCreateDto) {
+        logger.debug("POST /api/users/create-first - {}", userCreateDto);
         try {
+            // Проверяем, есть ли уже пользователи в системе
+            if (userService.hasUsers()) {
+                logger.error("First user already exists");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(UserResponseDto.builder()
+                        .message("First user already exists. Use regular user creation endpoint with authentication.")
+                        .build());
+            }
+            
+            // Устанавливаем роль ADMIN для первого пользователя
+            if (userCreateDto.roleId() == null) {
+                userCreateDto = new UserCreateDto(
+                    userCreateDto.username(),
+                    userCreateDto.password(),
+                    1L // ID роли ADMIN
+                );
+            }
+            
             User createdUser = userService.createUserWithRole(userCreateDto);
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(UserMapper.toUserResponseDto(createdUser));
         } catch (IllegalArgumentException e) {
-            logger.error("Error creating user: {}", e.getMessage());
+            logger.error("Error creating first user: {}", e.getMessage());
             return ResponseEntity.badRequest().build();
         } catch (Exception e) {
-            logger.error("Unexpected error creating user: {}", e.getMessage());
+            logger.error("Unexpected error creating first user: {}", e.getMessage());
             return ResponseEntity.internalServerError().build();
         }
     }
 
     // PUT /api/users/{id} - обновить пользователя
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('USER:WRITE')")
     public ResponseEntity<UserResponseDto> updateUser(@PathVariable Long id, 
                                                      @RequestBody UserCreateDto userCreateDto) {
         logger.debug("PUT /api/users/{} - {}", id, userCreateDto);
@@ -112,7 +135,6 @@ public class UserController {
             User userDetails = new User();
             userDetails.setUsername(userCreateDto.username());
             userDetails.setPassword(userCreateDto.password()); // Пароль будет закодирован в сервисе
-            
             
             User updatedUser = userService.updateUser(id, userDetails);
             if (updatedUser != null) {
@@ -129,6 +151,7 @@ public class UserController {
 
     // DELETE /api/users/{id} - удалить пользователя
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('USER:WRITE')")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
         logger.debug("DELETE /api/users/{}", id);
         try {
@@ -148,6 +171,7 @@ public class UserController {
 
     // GET /api/users/username/{username} - дополнительный метод для поиска по username
     @GetMapping("/username/{username}")
+    @PreAuthorize("hasAuthority('USER:WRITE')")
     public ResponseEntity<UserResponseDto> getUserByUsername(@PathVariable String username) {
         logger.debug("GET /api/users/username/{}", username);
         try {

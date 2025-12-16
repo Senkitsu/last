@@ -60,12 +60,12 @@ public class AuthService {
 
     private void addAccessTokenCookie(HttpHeaders headers, Token token) {
         headers.add(HttpHeaders.SET_COOKIE, 
-        cookieUtil.createAccessTokenCookie(token.getValue(), accessTokenDurationSecond).toString());
+        cookieUtil.createAccessTokenCookie(token.getTokenValue(), accessTokenDurationSecond).toString());
     }
 
     private void addRefreshTokenCookie(HttpHeaders headers, Token token) {
     headers.add(HttpHeaders.SET_COOKIE, 
-    cookieUtil.createRefreshTokenCookie(token.getValue(), refreshTokenDurationSecond).toString()); 
+    cookieUtil.createRefreshTokenCookie(token.getTokenValue(), refreshTokenDurationSecond).toString()); 
     }
 
     private void revokeAllTokensOfUser(User user) {

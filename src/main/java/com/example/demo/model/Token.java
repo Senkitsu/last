@@ -19,9 +19,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class Token {
 
-    public Token(TokenType type, String value, LocalDateTime expiryDate, boolean disabled, User user) {
+    public Token(TokenType type, String tokenValue, LocalDateTime expiryDate, boolean disabled, User user) {
         this.type = type;
-        this.value = value;
+        this.tokenValue = tokenValue;
         this.expiryDate = expiryDate;
         this.disabled = disabled;
         this.user = user;
@@ -32,7 +32,7 @@ public class Token {
     private Long id;
     
     private TokenType type;
-    private String value;
+    private String tokenValue;
     private LocalDateTime expiryDate;
     private boolean disabled;
 

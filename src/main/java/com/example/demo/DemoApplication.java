@@ -9,9 +9,12 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import com.example.demo.model.ModeType;
 import com.example.demo.model.Permission;
 import com.example.demo.model.Role;
 import com.example.demo.model.User;
+import com.example.demo.repository.ModeRepository;
+import com.example.demo.repository.ModeRuleRepository;
 import com.example.demo.repository.PermissionRepository;
 import com.example.demo.repository.RoleRepository;
 import com.example.demo.repository.UserRepository;
@@ -25,6 +28,8 @@ public class DemoApplication implements ApplicationRunner {
     private final PasswordEncoder passwordEncoder;
     private final RoleRepository roleRepository;
     private final UserRepository userRepository;
+    private final ModeRepository modeRepository;
+    private final ModeRuleRepository modeRuleRepository;
 
     public static void main(String[] args) {
         SpringApplication.run(DemoApplication.class, args);
@@ -33,11 +38,7 @@ public class DemoApplication implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) throws Exception {
 
-        // userRepository.deleteAll();
-        // roleRepository.deleteAll();
-        // permissionRepository.deleteAll();
 
-        // Создаем права для УМНОГО ДОМА
         Permission userRead = createPermissionIfNotFound("USER", "READ");
         Permission userWrite = createPermissionIfNotFound("USER", "WRITE");
         Permission deviceRead = createPermissionIfNotFound("DEVICE", "READ");
@@ -105,4 +106,18 @@ public class DemoApplication implements ApplicationRunner {
             System.out.println("Пользователь уже существует: " + username);
         }
     }
+
+    private void createModeIfNotFound(ModeType modeType, String name, String description) {
+    return modeRepository.findByModeType(modeType)
+        .orElseGet(() -> {
+            Mode mode = new Mode();
+            mode.setModeType(modeType);
+            mode.setName(name);
+            mode.setDescription(description);
+            mode = modeRepository.save(mode);
+            System.out.println("Создан режим: " + name + " (" + modeType + ")");
+            return mode;
+        });
+}
+
 }

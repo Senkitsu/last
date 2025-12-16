@@ -30,7 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 public class JwtAuthFilter extends OncePerRequestFilter{
 
     private static final Logger logger = LoggerFactory.getLogger(JwtAuthFilter.class);
-    @Value("${jwt.access.name}")
+    @Value("${jwt.access.cookie_name}")
     private String accessCookieName;
 
     private final JwtTokenProvider tokenProvider;

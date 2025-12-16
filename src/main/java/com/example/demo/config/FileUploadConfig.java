@@ -7,9 +7,11 @@ import org.springframework.web.multipart.MultipartResolver;
 import org.springframework.web.multipart.support.StandardServletMultipartResolver;
 
 import jakarta.servlet.MultipartConfigElement;
+import lombok.extern.slf4j.Slf4j;
+
 import java.nio.file.Path;
 import java.nio.file.Paths;
-
+@Slf4j
 @Configuration
 public class FileUploadConfig {
 
@@ -18,6 +20,7 @@ public class FileUploadConfig {
 
     @Bean
     public MultipartConfigElement multipartConfigElement() {
+        log.info("dsv");
         return new MultipartConfigElement("");
     }
 

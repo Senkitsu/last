@@ -10,5 +10,5 @@ import com.example.demo.model.ModeType;
 
 @Repository
 public interface ModeRepository extends JpaRepository<Mode, Long> {
-    Optional<Mode> findByModeType(ModeType modeType);
+    Optional<Mode> findByModeType(String modeType);
 }

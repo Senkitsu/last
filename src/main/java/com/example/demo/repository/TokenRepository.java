@@ -13,5 +13,5 @@ import com.example.demo.model.User;
 public interface TokenRepository extends JpaRepository<Token, Long>{
     List<Token> findByUser(User user);
     List<Token> findByUserAndDisabledFalse(User user);
-    Optional<Token> findByValueAndDisabledFalse(String value);
+    Optional<Token> findByTokenValueAndDisabledFalse(String tokenValue);
 }

@@ -8,13 +8,13 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class CookieUtil {
-    @Value("${jwt.access.name}")
-    private String accessName;
-    @Value("${jwt.refresh.name}")
-    private String refreshName;
+    @Value("${jwt.access.cookie_name}")
+    private String accessCookieName;
+    @Value("${jwt.refresh.cookie_name}")
+    private String refreshCookieName;
 
     public HttpCookie createAccessTokenCookie(String token, long duration) {
-        return ResponseCookie.from(accessName, token)
+        return ResponseCookie.from(accessCookieName, token)
         .maxAge(duration)
         .httpOnly(true)
         .secure(true)
@@ -25,7 +25,7 @@ public class CookieUtil {
     }
 
     public HttpCookie deleteAccessTokenCookie() {
-        return ResponseCookie.from(accessName, "")
+        return ResponseCookie.from(accessCookieName, "")
         .maxAge(0)
         .httpOnly(true)
         .path("/")
@@ -33,7 +33,7 @@ public class CookieUtil {
     }
 
     public HttpCookie createRefreshTokenCookie(String token, long duration) {
-        return ResponseCookie.from(refreshName, token)
+        return ResponseCookie.from(refreshCookieName, token)
         .maxAge(duration)
         .httpOnly(true)
         .secure(true)
@@ -43,7 +43,7 @@ public class CookieUtil {
     }
 
     public HttpCookie deleteRefreshTokenCookie() {
-        return ResponseCookie.from(refreshName, "")
+        return ResponseCookie.from(refreshCookieName, "")
         .maxAge(0)
         .httpOnly(true)
         .path("/")
