@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bus Sensor Management System</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #0d47a1;
+            --secondary-color: #1976d2;
+            --success-color: #388e3c;
+            --danger-color: #d32f2f;
+            --warning-color: #f57c00;
+            --info-color: #0097a7;
+        }
+
+        body {
+            background-color: #f5f5f5;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .navbar-brand {
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+
+        .sidebar {
+            background-color: white;
+            border-right: 1px solid #e0e0e0;
+            min-height: 100vh;
+            padding: 20px 0;
+        }
+
+        .nav-link {
+            color: #666;
+            padding: 12px 20px;
+            border-left: 4px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .nav-link:hover {
+            color: var(--primary-color);
+            background-color: #f5f5f5;
+            border-left-color: var(--primary-color);
+        }
+
+        .nav-link.active {
+            color: var(--primary-color);
+            background-color: #e3f2fd;
+            border-left-color: var(--primary-color);
+        }
+
+        .main-content {
+            padding: 30px;
+        }
+
+        .card {
+            border: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border-radius: 8px 8px 0 0;
+            padding: 20px;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .btn-sm {
+            padding: 0.25rem 0.5rem;
+        }
+
+        table {
+            font-size: 0.95rem;
+        }
+
+        .table-hover tbody tr:hover {
+            background-color: #f5f5f5;
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(13, 71, 161, 0.25);
+        }
+
+        .alert-info {
+            background-color: #e1f5fe;
+            color: #01579b;
+            border: none;
+        }
+
+        .badge-success {
+            background-color: var(--success-color);
+        }
+
+        .badge-danger {
+            background-color: var(--danger-color);
+        }
+
+        .spinner-border {
+            width: 1rem;
+            height: 1rem;
+        }
+
+        .loader {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loader.active {
+            display: block;
+        }
+
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .badge {
+            padding: 0.5rem 0.75rem;
+        }
+
+        .file-upload-zone {
+            border: 2px dashed var(--primary-color);
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            background-color: #f5f5f5;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .file-upload-zone:hover {
+            background-color: #e3f2fd;
+            border-color: var(--secondary-color);
+        }
+
+        .file-upload-zone.dragover {
+            background-color: #e3f2fd;
+            border-color: var(--secondary-color);
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                left: -250px;
+                width: 250px;
+                z-index: 1000;
+                transition: left 0.3s ease;
+            }
+
+            .sidebar.active {
+                left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-bus"></i> Bus Sensor Manager
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <span class="navbar-text me-3" id="userInfo"></span>
+                    </li>
+                    <li class="nav-item">
+                        <button class="btn btn-outline-light btn-sm" onclick="logout()">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-2 sidebar">
+                <div class="nav flex-column">
+                    <a class="nav-link active" onclick="showSection('dashboard')" style="cursor: pointer;">
+                        <i class="fas fa-dashboard"></i> Dashboard
+                    </a>
+                    <a class="nav-link" onclick="showSection('buses')" style="cursor: pointer;">
+                        <i class="fas fa-bus"></i> Buses
+                    </a>
+                    <a class="nav-link" onclick="showSection('sensors')" style="cursor: pointer;">
+                        <i class="fas fa-thermometer"></i> Sensors
+                    </a>
+                    <a class="nav-link" onclick="showSection('file-upload')" style="cursor: pointer;">
+                        <i class="fas fa-upload"></i> File Upload
+                    </a>
+                    <a class="nav-link" onclick="showSection('csv-import')" style="cursor: pointer;">
+                        <i class="fas fa-file-csv"></i> CSV Import
+                    </a>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-10 main-content">
+
+                <!-- Login Section -->
+                <div id="login-section" class="section active">
+                    <div class="row justify-content-center">
+                        <div class="col-md-6">
+                            <div class="card mt-5">
+                                <div class="card-header">
+                                    <h3 class="mb-0"><i class="fas fa-sign-in-alt"></i> Login</h3>
+                                </div>
+                                <div class="card-body">
+                                    <form onsubmit="login(event)">
+                                        <div class="form-group mb-3">
+                                            <label for="loginUsername">Username</label>
+                                            <input type="text" class="form-control" id="loginUsername" required>
+                                        </div>
+                                        <div class="form-group mb-3">
+                                            <label for="loginPassword">Password</label>
+                                            <input type="password" class="form-control" id="loginPassword" required>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary w-100">
+                                            <i class="fas fa-sign-in-alt"></i> Login
+                                        </button>
+                                    </form>
+                                    <div id="loginError" class="alert alert-danger mt-3" style="display: none;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dashboard Section -->
+                <div id="dashboard" class="section">
+                    <h1 class="mb-4"><i class="fas fa-dashboard"></i> Dashboard</h1>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-bus" style="font-size: 2rem; color: var(--primary-color);"></i>
+                                    <h5 class="mt-3">Total Buses</h5>
+                                    <h2 id="totalBuses">0</h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-thermometer" style="font-size: 2rem; color: var(--warning-color);"></i>
+                                    <h5 class="mt-3">Total Sensors</h5>
+                                    <h2 id="totalSensors">0</h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-exclamation-triangle" style="font-size: 2rem; color: var(--danger-color);"></i>
+                                    <h5 class="mt-3">Anomalies</h5>
+                                    <h2 id="totalAnomalies">0</h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-file" style="font-size: 2rem; color: var(--info-color);"></i>
+                                    <h5 class="mt-3">Files</h5>
+                                    <h2 id="totalFiles">0</h2>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Buses Section -->
+                <div id="buses" class="section">
+                    <h1 class="mb-4"><i class="fas fa-bus"></i> Buses Management</h1>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Add New Bus</h5>
+                        </div>
+                        <div class="card-body">
+                            <form onsubmit="addBus(event)">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label for="busModel">Bus Model</label>
+                                            <input type="text" class="form-control" id="busModel" placeholder="e.g., Mercedes-Benz Citaro" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label>&nbsp;</label>
+                                            <button type="submit" class="btn btn-primary w-100">
+                                                <i class="fas fa-plus"></i> Add Bus
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Buses List</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="loader" id="busesLoader">
+                                <div class="spinner-border" role="status"></div> Loading...
+                            </div>
+                            <table class="table table-hover" id="busesTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Model</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="busesList">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sensors Section -->
+                <div id="sensors" class="section">
+                    <h1 class="mb-4"><i class="fas fa-thermometer"></i> Sensors Management</h1>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Add New Sensor Data</h5>
+                        </div>
+                        <div class="card-body">
+                            <form onsubmit="addSensorData(event)">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <div class="form-group mb-3">
+                                            <label for="sensorBusId">Bus ID</label>
+                                            <input type="number" class="form-control" id="sensorBusId" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-group mb-3">
+                                            <label for="sensorType">Sensor Type</label>
+                                            <select class="form-control" id="sensorType" required>
+                                                <option value="">Select type</option>
+                                                <option value="ENGINE_TEMP">Engine Temperature</option>
+                                                <option value="TIRE_PRESSURE">Tire Pressure</option>
+                                                <option value="FUEL_LEVEL">Fuel Level</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="form-group mb-3">
+                                            <label for="sensorValue">Value</label>
+                                            <input type="number" step="0.01" class="form-control" id="sensorValue" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="form-group mb-3">
+                                            <label for="sensorAnomaly">Anomaly</label>
+                                            <select class="form-control" id="sensorAnomaly">
+                                                <option value="false">No</option>
+                                                <option value="true">Yes</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="form-group mb-3">
+                                            <label>&nbsp;</label>
+                                            <button type="submit" class="btn btn-primary w-100">
+                                                <i class="fas fa-plus"></i> Add
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Sensors List</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="loader" id="sensorsLoader">
+                                <div class="spinner-border" role="status"></div> Loading...
+                            </div>
+                            <table class="table table-hover" id="sensorsTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Bus ID</th>
+                                        <th>Sensor Type</th>
+                                        <th>Value</th>
+                                        <th>Timestamp</th>
+                                        <th>Anomaly</th>
+                                        <th>File</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="sensorsList">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- File Upload Section -->
+                <div id="file-upload" class="section">
+                    <h1 class="mb-4"><i class="fas fa-upload"></i> File Upload</h1>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Upload File to Sensor Data</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group mb-3">
+                                <label for="fileSensorId">Sensor Data ID</label>
+                                <input type="number" class="form-control" id="fileSensorId" placeholder="Enter SensorData ID" required>
+                            </div>
+
+                            <div class="file-upload-zone" id="fileUploadZone" ondrop="handleFileDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+                                <i class="fas fa-cloud-upload-alt" style="font-size: 2rem;"></i>
+                                <p class="mt-2 mb-0">Drag and drop file here or click to select</p>
+                                <small class="text-muted">Supported: CSV, PNG, JPEG, PDF (Max 10 MB)</small>
+                                <input type="file" id="fileInput" style="display: none;" onchange="uploadFile()" accept=".csv,.png,.jpg,.jpeg,.pdf">
+                            </div>
+
+                            <div class="mt-3">
+                                <button class="btn btn-primary" onclick="document.getElementById('fileInput').click();">
+                                    <i class="fas fa-folder-open"></i> Select File
+                                </button>
+                            </div>
+
+                            <div id="uploadProgress" style="display: none;" class="mt-3">
+                                <div class="progress">
+                                    <div class="progress-bar progress-bar-striped progress-bar-animated" id="uploadProgressBar" style="width: 0%"></div>
+                                </div>
+                            </div>
+
+                            <div id="uploadResult" style="margin-top: 20px;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CSV Import Section -->
+                <div id="csv-import" class="section">
+                    <h1 class="mb-4"><i class="fas fa-file-csv"></i> CSV Import</h1>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Import Sensor Data from CSV</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-info">
+                                <strong>CSV Format:</strong> busId, sensorType, value, timestamp, anomaly<br>
+                                <strong>Example:</strong> 1, ENGINE_TEMP, 85.5, 2026-01-16T09:30:00, false
+                            </div>
+
+                            <div class="file-upload-zone" id="csvUploadZone" ondrop="handleCsvDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+                                <i class="fas fa-cloud-upload-alt" style="font-size: 2rem;"></i>
+                                <p class="mt-2 mb-0">Drag and drop CSV file here or click to select</p>
+                                <small class="text-muted">CSV file only (Max 10 MB)</small>
+                                <input type="file" id="csvInput" style="display: none;" onchange="importCsv()" accept=".csv">
+                            </div>
+
+                            <div class="mt-3">
+                                <button class="btn btn-primary" onclick="document.getElementById('csvInput').click();">
+                                    <i class="fas fa-folder-open"></i> Select CSV File
+                                </button>
+                            </div>
+
+                            <div id="csvProgress" style="display: none;" class="mt-3">
+                                <div class="progress">
+                                    <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: 100%"></div>
+                                </div>
+                                <p class="mt-2">Importing...</p>
+                            </div>
+
+                            <div id="csvResult" style="margin-top: 20px;"></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Bus Modal -->
+    <div class="modal fade" id="editBusModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Bus</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form onsubmit="updateBus(event)">
+                    <div class="modal-body">
+                        <input type="hidden" id="editBusId">
+                        <div class="form-group">
+                            <label for="editBusModel">Bus Model</label>
+                            <input type="text" class="form-control" id="editBusModel" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Sensor Modal -->
+    <div class="modal fade" id="editSensorModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Sensor Data</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form onsubmit="updateSensor(event)">
+                    <div class="modal-body">
+                        <input type="hidden" id="editSensorId">
+                        <div class="form-group mb-3">
+                            <label for="editSensorType">Sensor Type</label>
+                            <select class="form-control" id="editSensorType" required>
+                                <option value="ENGINE_TEMP">Engine Temperature</option>
+                                <option value="TIRE_PRESSURE">Tire Pressure</option>
+                                <option value="FUEL_LEVEL">Fuel Level</option>
+                            </select>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="editSensorValue">Value</label>
+                            <input type="number" step="0.01" class="form-control" id="editSensorValue" required>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="editSensorAnomaly">Anomaly</label>
+                            <select class="form-control" id="editSensorAnomaly">
+                                <option value="false">No</option>
+                                <option value="true">Yes</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
+message.txt
+28 кб

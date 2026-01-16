@@ -18,7 +18,7 @@ public class DeviceMapper {
             device.getPower(),
             device.isActive(),
             device.getRoom() != null ? 
-                new RoomSimpleDto(device.getRoom().getId(), device.getRoom().getLocation()) : 
+                new RoomSimpleDto(device.getRoom().getId(), device.getRoom().getBus()) : 
                 null
         );
     }

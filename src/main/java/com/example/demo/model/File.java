@@ -25,7 +25,7 @@ public class File {
     private String originalFileName;
     
     @Column(nullable = false)
-    private String fileType; // MIME type
+    private String fileType;
     
     @Column(nullable = false)
     private String fileExtension;

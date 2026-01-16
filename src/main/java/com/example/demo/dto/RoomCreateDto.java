@@ -1,6 +1,6 @@
 package com.example.demo.dto;
 
 public record RoomCreateDto(
-    String location,
+    String bus,
     Long managerId
 ) {}

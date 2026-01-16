@@ -50,9 +50,9 @@ public class RoomService {
         return roomRepository.findById(id).orElse(null);
     }
 
-    public List<Room> getRoomByLocation(String location) {
-        logger.debug("Getting rooms by location: {}", location);
-        return roomRepository.findByLocationIgnoreCase(location);
+    public List<Room> getRoomByBus(String bus) {
+        logger.debug("Getting rooms by bus: {}", bus);
+        return roomRepository.findByBusIgnoreCase(bus);
     }
 
     public Room updateRoom(Long id, Room roomDetails) {
@@ -61,7 +61,7 @@ public class RoomService {
             .map(existingRoom -> {
                 existingRoom.setDevices(roomDetails.getDevices());
                 existingRoom.setManager(roomDetails.getManager());
-                existingRoom.setLocation(roomDetails.getLocation());
+                existingRoom.setBus(roomDetails.getBus());
                 return roomRepository.save(existingRoom);
             })
             .orElse(null);

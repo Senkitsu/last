@@ -7,5 +7,8 @@ public enum DeviceType {
     KETTLE,
     MICROWAVE,
     CONDITIONER,
-    TELEVISION
+    TELEVISION,
+    AC,
+    HEATER,
+    FAN
 }

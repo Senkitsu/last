@@ -39,17 +39,15 @@ public class Room {
     @ManyToOne
     @JoinColumn(name = "manager_id")
     @JsonBackReference("user-rooms")
-    // ✅ НЕТ @ToString.Include
     private User manager;
 
     @Column(nullable = false)
-    @NotBlank(message = "Название комнаты не может быть пустым")
+    @NotBlank(message = "Название автобуса не может быть пустым")
     @ToString.Include
-    private String location;
+    private String bus;
 
     @OneToMany(mappedBy = "room", cascade = CascadeType.ALL)
     @JsonManagedReference("room-devices")
-    // ✅ НЕТ @ToString.Include
     private List<Device> devices = new ArrayList<>();
 
 

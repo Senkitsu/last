@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+    
+    <appender name="TELEGRAM" class="com.example.demo.loggingTele.TelegramAppender">
+        <minimumLevel>WARN</minimumLevel>
+        <includeInfo>false</includeInfo>
+        <maxMessageLength>4000</maxMessageLength>
+    </appender>
+    
+    <appender name="ASYNC_TELEGRAM" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="TELEGRAM"/>
+        <queueSize>512</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <includeCallerData>false</includeCallerData>
+        <neverBlock>true</neverBlock>
+    </appender>
+    
+    <logger name="com.example.demo" level="DEBUG" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="ASYNC_TELEGRAM"/>
+    </logger>
+    
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="ASYNC_TELEGRAM"/>
+    </root>
+    
+</configuration>

@@ -32,10 +32,22 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/devices") // Все URL начинаются с /api/devices
+@RequestMapping("/api/devices")
+@Tag(name = "device-management-controller", description = """
+    Контроллер для управления устройствами системы умного дома.
+    """)
 public class DeviceController {
     
     private static final Logger logger = LoggerFactory.getLogger(DeviceController.class);
@@ -54,15 +66,93 @@ public class DeviceController {
         this.csvParserUtil = csvParserUtil;
     }
     
-     // GET /api/devices - получить все устройства
+    @Operation(
+        summary = "Получить список устройств с фильтрацией и пагинацией",
+        description = """
+            Возвращает постраничный список устройств с поддержкой фильтрации.
+            
+            ### Фильтры (все опциональны):
+            - **title** - поиск по названию устройства (регистронезависимый, частичное совпадение)
+            - **type** - фильтр по типу устройства (LIGHT, HEATER, AC, VENTILATION, APPLIANCE)
+            - **minPower/maxPower** - фильтр по диапазону мощности (Вт)
+            - **active** - фильтр по статусу активности
+            
+            ### Пагинация:
+            - По умолчанию: страница 0, размер 3, сортировка по title
+            - Поддерживаются параметры: page, size, sort
+            - Пример: `/api/devices?page=0&size=10&sort=power,desc`
+            
+            ### Права доступа:
+            - **USER**: видит только устройства в своих комнатах
+            - **ADMIN**: видит все устройства системы
+            
+            ### Примеры использования:
+            - Получить все активные светильники: `/api/devices?type=LIGHT&active=true`
+            - Найти устройства мощностью от 100 до 1000 Вт: `/api/devices?minPower=100&maxPower=1000`
+            - Поиск по названию: `/api/devices?title=кондиционер`
+            """,
+        tags = {"device-management-controller", "read-operations"}
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Список устройств успешно получен",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = Page.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "401",
+            description = "Пользователь не аутентифицирован"
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Неверные параметры фильтрации или пагинации"
+        )
+    })
     @GetMapping
     public ResponseEntity<Page<DeviceResponseDto>> getAllDevices(
+            @Parameter(
+                description = "Название устройства (частичное совпадение)",
+                example = "свет"
+            )
             @RequestParam(required = false) String title,
+            
+            @Parameter(
+                description = "Тип устройства",
+                schema = @Schema(implementation = DeviceType.class)
+            )
             @RequestParam(required = false) DeviceType type,
+            
+            @Parameter(
+                description = "Минимальная мощность (Вт)",
+                example = "100.0"
+            )
             @RequestParam(required = false) Double minPower,
-            @RequestParam(required = false) Double maxPower, 
+            
+            @Parameter(
+                description = "Максимальная мощность (Вт)",
+                example = "1000.0"
+            )
+            @RequestParam(required = false) Double maxPower,
+            
+            @Parameter(
+                description = "Статус активности",
+                example = "true"
+            )
             @RequestParam(required = false) Boolean active,
+            
+            @Parameter(hidden = true)
             Authentication authentication,
+            
+            @Parameter(
+                description = "Параметры пагинации",
+                schema = @Schema(
+                    type = "object",
+                    example = "{\"page\": 0, \"size\": 10, \"sort\": [\"title,asc\"]}"
+                )
+            )
             @PageableDefault(page = 0, size = 3, sort = "title") Pageable pageable) {
 
         String username = authentication.getName();
@@ -77,14 +167,73 @@ public class DeviceController {
             devices = deviceRepository.findAll(pageable);
         }
         
-        // Конвертируем в DTO
         Page<DeviceResponseDto> deviceDtos = devices.map(DeviceMapper::toDto);
         return ResponseEntity.ok(deviceDtos);
     }
     
-    // GET /api/devices/{id} - получить устройство по ID
+    @Operation(
+        summary = "Получить устройство по ID",
+        description = """
+            Возвращает подробную информацию об устройстве по его идентификатору.
+            
+            ### Возвращаемая информация:
+            - Основные данные устройства (название, тип, мощность)
+            - Статус активности
+            - Информация о комнате (если устройство привязано)
+            - Время последнего изменения
+            
+            ### Обработка ошибок:
+            - Если устройство не найдено → 404 Not Found
+            - Если нет прав доступа → 403 Forbidden
+            
+            ### Пример использования:
+            Получение информации о конкретном устройстве для отображения на дашборде
+            """,
+        tags = {"device-management-controller", "read-operations"}
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Устройство найдено",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = DeviceResponseDto.class),
+                examples = @ExampleObject(
+                    name = "Пример ответа",
+                    value = """
+                        {
+                          "id": 123,
+                          "title": "Умный светильник в гостиной",
+                          "type": "LIGHT",
+                          "power": 50.0,
+                          "active": true,
+                          "roomId": 1,
+                          "roomName": "Гостиная",
+                          "createdAt": "2024-01-10T10:30:00Z",
+                          "updatedAt": "2024-01-15T14:25:00Z"
+                        }
+                        """
+                )
+            )
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Устройство с указанным ID не найдено"
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "Нет прав доступа к данному устройству"
+        )
+    })
     @GetMapping("/{id}")
-    public ResponseEntity<DeviceResponseDto> getDeviceById(@PathVariable Long id) {
+    public ResponseEntity<DeviceResponseDto> getDeviceById(
+            @Parameter(
+                description = "Идентификатор устройства",
+                required = true,
+                example = "123"
+            )
+            @PathVariable Long id) {
+        
         Device device = deviceService.getDeviceById(id);
         if (device != null) {
             return ResponseEntity.ok(DeviceMapper.toDto(device));
@@ -92,20 +241,100 @@ public class DeviceController {
             return ResponseEntity.notFound().build();
         }
     }
-    
-   // POST /api/devices - создать новое устройство
+
+    @Operation(
+        summary = "Создать новое устройство",
+        description = """
+            Создает новое устройство в системе умного дома.
+            
+            ### Обязательные поля:
+            - **title** - название устройства (строка, не пустая)
+            - **type** - тип устройства (enum: LIGHT, HEATER, AC, VENTILATION, APPLIANCE)
+            - **power** - потребляемая мощность в ваттах (число с плавающей точкой)
+            - **active** - начальное состояние устройства (boolean)
+            
+            ### Опциональные поля:
+            - **roomId** - идентификатор комнаты для привязки устройства
+            
+            ### Валидация:
+            - Мощность не может быть отрицательной
+            - Название должно быть уникальным в рамках системы
+            - Комната должна существовать, если указана
+            - Тип должен быть из допустимых значений
+            
+            ### Примеры использования:
+            - Добавление нового умного светильника
+            - Создание обогревателя с привязкой к комнате
+            """,
+        tags = {"device-management-controller", "write-operations"}
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "201",
+            description = "Устройство успешно создано",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = DeviceResponseDto.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Неверные данные устройства или нарушение валидации"
+        ),
+        @ApiResponse(
+            responseCode = "401",
+            description = "Пользователь не аутентифицирован"
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "Недостаточно прав для создания устройства"
+        )
+    })
     @PostMapping
-    public ResponseEntity<DeviceResponseDto> createDevice(@RequestBody DeviceRequestDto deviceRequest) {
+    public ResponseEntity<DeviceResponseDto> createDevice(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                description = "Данные нового устройства",
+                required = true,
+                content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = DeviceRequestDto.class),
+                    examples = {
+                        @ExampleObject(
+                            name = "Создание светильника",
+                            value = """
+                                {
+                                  "title": "Умная лампа в спальне",
+                                  "type": "LIGHT",
+                                  "power": 25.5,
+                                  "active": false,
+                                  "roomId": 2
+                                }
+                                """
+                        ),
+                        @ExampleObject(
+                            name = "Создание обогревателя без привязки",
+                            value = """
+                                {
+                                  "title": "Мобильный обогреватель",
+                                  "type": "HEATER",
+                                  "power": 1500.0,
+                                  "active": true
+                                }
+                                """
+                        )
+                    }
+                )
+            )
+            @RequestBody DeviceRequestDto deviceRequest) {
+        
         logger.debug("POST /api/devices - creating device: {}", deviceRequest);
         try {
-            // Конвертируем DTO в Entity
             Device device = new Device();
             device.setTitle(deviceRequest.title());
             device.setType(deviceRequest.type());
             device.setPower(deviceRequest.power());
             device.setActive(deviceRequest.active());
             
-            // Устанавливаем комнату, если указана
             if (deviceRequest.roomId() != null) {
                 Room room = roomService.getRoomById(deviceRequest.roomId());
                 if (room == null) {
@@ -124,9 +353,66 @@ public class DeviceController {
         }
     }
     
-    // PUT /api/devices/{id} - обновить устройство
+    @Operation(
+        summary = "Обновить существующее устройство",
+        description = """
+            Обновляет данные существующего устройства.
+            
+            ### Особенности:
+            - Можно обновить все поля устройства
+            - Поддерживается изменение привязки к комнате
+            - Можно отвязать устройство от комнаты (указать null)
+            - Все поля опциональны (не указанные поля остаются без изменений)
+            
+            ### Ограничения:
+            - Нельзя изменить ID устройства
+            - Требуются права на управление устройством
+            - Проверка уникальности названия (если изменяется)
+            
+            ### Примеры использования:
+            - Переименование устройства
+            - Изменение мощности устройства
+            - Перемещение устройства в другую комнату
+            """,
+        tags = {"device-management-controller", "write-operations"}
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Устройство успешно обновлено"
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Устройство с указанным ID не найдено"
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Неверные данные для обновления"
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "Нет прав на обновление устройства"
+        )
+    })
     @PutMapping("/{id}")
-    public ResponseEntity<DeviceResponseDto> updateDevice(@PathVariable Long id, @RequestBody DeviceRequestDto deviceRequest) {
+    public ResponseEntity<DeviceResponseDto> updateDevice(
+            @Parameter(
+                description = "Идентификатор обновляемого устройства",
+                required = true,
+                example = "123"
+            )
+            @PathVariable Long id,
+            
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                description = "Новые данные устройства",
+                required = true,
+                content = @Content(
+                    mediaType = "application/json",
+                    schema = @Schema(implementation = DeviceRequestDto.class)
+                )
+            )
+            @RequestBody DeviceRequestDto deviceRequest) {
+        
         logger.debug("PUT /api/devices/{} - updating device: {}", id, deviceRequest);
         
         try {
@@ -136,7 +422,6 @@ public class DeviceController {
             deviceDetails.setPower(deviceRequest.power());
             deviceDetails.setActive(deviceRequest.active());
             
-            // Обновляем комнату, если указана
             if (deviceRequest.roomId() != null) {
                 Room room = roomService.getRoomById(deviceRequest.roomId());
                 if (room == null) {
@@ -159,9 +444,55 @@ public class DeviceController {
         }
     }
     
-    // DELETE /api/devices/{id} - удалить устройство
+    @Operation(
+        summary = "Удалить устройство",
+        description = """
+            Удаляет устройство из системы.
+            
+            ### Особенности удаления:
+            - Удаление происходит мягкое (soft delete) - устройство помечается как удаленное
+            - История изменений сохраняется для аудита
+            - При удалении автоматически отвязываются все связи
+            - Восстановление возможно только администратором
+            
+            ### Проверки:
+            - Устройство должно существовать
+            - У пользователя должны быть права на удаление
+            - Устройство не должно быть активно в момент удаления
+            
+            ### Примеры использования:
+            - Удаление старого или неиспользуемого оборудования
+            - Очистка тестовых данных
+            """,
+        tags = {"device-management-controller", "write-operations"}
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "204",
+            description = "Устройство успешно удалено"
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "Устройство с указанным ID не найдено"
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Устройство активно или используется в других процессах"
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "Нет прав на удаление устройства"
+        )
+    })
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteDevice(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteDevice(
+            @Parameter(
+                description = "Идентификатор удаляемого устройства",
+                required = true,
+                example = "123"
+            )
+            @PathVariable Long id) {
+        
         logger.debug("DELETE /api/devices/{}", id);
         boolean deleted = deviceService.deleteDevice(id);
         if (deleted) {
@@ -172,14 +503,108 @@ public class DeviceController {
         }
     }
 
+    @Operation(
+        summary = "Импорт устройств из CSV файла",
+        description = """
+            Массовый импорт устройств из CSV файла.
+            
+            ### Поддерживаемый формат CSV:
+            - Разделитель: запятая (,)
+            - Кодировка: UTF-8
+            - Обязательные колонки: title, type
+            - Опциональные колонки: power, active, roomBus
+            
+            ### Пример CSV файла:
+            ```
+            title,type,power,active,roomBus
+            Свет в гостиной,LIGHT,50.0,true,Гостиная
+            Обогреватель,HEATER,1500.0,false,Спальня
+            Кондиционер,AC,2000.0,true,
+            ```
+            
+            ### Обработка ошибок:
+            - Валидация каждой строки CSV
+            - Продолжение импорта после ошибок
+            - Детальный отчет об успешных и неуспешных операциях
+            - Поддержка частичного импорта
+            
+            ### Лимиты:
+            - Максимальный размер файла: 10MB
+            - Максимальное количество строк: 1000
+            - Поддерживаемые форматы: .csv, text/csv
+            
+            ### Возвращаемый отчет:
+            - Количество успешно импортированных устройств
+            - Количество ошибок
+            - Детальный список ошибок (если есть)
+            """,
+        tags = {"device-management-controller", "bulk-operations"}
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Импорт завершен (возможно с ошибками)",
+            content = @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = CsvImportDto.class),
+                examples = {
+                    @ExampleObject(
+                        name = "Успешный импорт",
+                        value = """
+                            {
+                              "message": "Import completed successfully",
+                              "successCount": 50,
+                              "errorCount": 0,
+                              "errors": [],
+                              "hasErrors": false
+                            }
+                            """
+                    ),
+                    @ExampleObject(
+                        name = "Импорт с ошибками",
+                        value = """
+                            {
+                              "message": "Import completed with errors",
+                              "successCount": 45,
+                              "errorCount": 5,
+                              "errors": [
+                                "Device 10 'Некорректное устройство': Invalid device type: UNKNOWN",
+                                "Device 25 'Устройство без названия': Title is required"
+                              ],
+                              "hasErrors": true
+                            }
+                            """
+                    )
+                }
+            )
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "Некорректный файл (не CSV или поврежден)"
+        ),
+        @ApiResponse(
+            responseCode = "413",
+            description = "Файл слишком большой (> 10MB)"
+        ),
+        @ApiResponse(
+            responseCode = "415",
+            description = "Неподдерживаемый тип файла"
+        )
+    })
     @PostMapping(value = "/import/csv", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<CsvImportDto> importDevicesFromCsv(
+            @Parameter(
+                description = "CSV файл с устройствами",
+                required = true,
+                content = @Content(mediaType = "multipart/form-data")
+            )
             @RequestParam("file") MultipartFile file,
+            
+            @Parameter(hidden = true)
             Authentication authentication) {
         
         log.debug("POST /api/devices/import/csv - importing devices from CSV");
         
-        // Проверяем что файл CSV
         if (!isCsvFile(file)) {
             return ResponseEntity.badRequest().body(new CsvImportDto(
                 "File must be CSV format", 0, 0, List.of("Invalid file type"), true
@@ -187,12 +612,10 @@ public class DeviceController {
         }
 
         try {
-            // Парсим CSV
             CsvParserUtil.CsvParseResult<Device> parseResult = csvParserUtil.parseCsvFile(
                 file, this::mapCsvRecordToDevice
             );
 
-            // Сохраняем устройства
             List<Device> savedDevices = new ArrayList<>();
             List<String> saveErrors = new ArrayList<>(parseResult.getErrors());
 
@@ -237,14 +660,12 @@ public class DeviceController {
     }
 
     private Device mapCsvRecordToDevice(CSVRecord record) {
-        // Получаем значения из CSV
         String title = record.get("title");
         String typeStr = record.get("type");
         String powerStr = record.get("power");
         String activeStr = record.get("active");
-        String roomLocation = record.get("roomLocation");
+        String roomBus = record.get("roomBus");
 
-        // Валидация обязательных полей
         if (title == null || title.trim().isEmpty()) {
             throw new IllegalArgumentException("Title is required");
         }
@@ -252,7 +673,6 @@ public class DeviceController {
             throw new IllegalArgumentException("Type is required");
         }
 
-        // Парсинг типа устройства
         DeviceType type;
         try {
             type = DeviceType.valueOf(typeStr.trim().toUpperCase());
@@ -260,7 +680,6 @@ public class DeviceController {
             throw new IllegalArgumentException("Invalid device type: " + typeStr);
         }
 
-        // Парсинг мощности
         double power = 0.0;
         if (powerStr != null && !powerStr.trim().isEmpty()) {
             try {
@@ -273,7 +692,6 @@ public class DeviceController {
             }
         }
 
-        // Парсинг статуса активности
         boolean active = false;
         if (activeStr != null && !activeStr.trim().isEmpty()) {
             String activeLower = activeStr.trim().toLowerCase();
@@ -284,20 +702,18 @@ public class DeviceController {
             }
         }
 
-        // Создаем устройство
         Device device = new Device();
         device.setTitle(title.trim());
         device.setType(type);
         device.setPower(power);
         device.setActive(active);
 
-        // Привязываем к комнате если указана локация
-        if (roomLocation != null && !roomLocation.trim().isEmpty()) {
-            List<Room> rooms = roomService.getRoomByLocation(roomLocation.trim());
+        if (roomBus != null && !roomBus.trim().isEmpty()) {
+            List<Room> rooms = roomService.getRoomByBus(roomBus.trim());
             if (!rooms.isEmpty()) {
                 device.setRoom(rooms.get(0));
             } else {
-                throw new IllegalArgumentException("Room not found with location: " + roomLocation);
+                throw new IllegalArgumentException("Room not found with bus: " + roomBus);
             }
         }
 
@@ -311,5 +727,4 @@ public class DeviceController {
         return "text/csv".equals(contentType) || 
             (fileName != null && fileName.toLowerCase().endsWith(".csv"));
     }
-
 }

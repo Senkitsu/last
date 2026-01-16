@@ -1,36 +1,28 @@
 package com.example.demo.config;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.multipart.MultipartResolver;
-import org.springframework.web.multipart.support.StandardServletMultipartResolver;
-
-import jakarta.servlet.MultipartConfigElement;
-import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-@Slf4j
+
 @Configuration
-public class FileUploadConfig {
+public class FileUploadConfig implements WebMvcConfigurer {
 
-    @Value("${file.upload-dir:uploads}")
-    private String uploadDir;
+    // Убрали @Value
+    private final String uploadDir = "uploads";
 
-    @Bean
-    public MultipartConfigElement multipartConfigElement() {
-        log.info("dsv");
-        return new MultipartConfigElement("");
-    }
-
-    @Bean
-    public MultipartResolver multipartResolver() {
-        return new StandardServletMultipartResolver();
-    }
-
-    @Bean
-    public Path fileStorageLocation() {
-        return Paths.get(uploadDir).toAbsolutePath().normalize();
+    @Override
+    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        System.out.println("dsv");
+        
+        // Конвертируем путь для внешнего доступа
+        Path uploadPath = Paths.get(uploadDir);
+        String uploadAbsolutePath = uploadPath.toFile().getAbsolutePath();
+        
+        // Регистрируем внешний URL для доступа к загруженным файлам
+        registry.addResourceHandler("/uploads/**")
+                .addResourceLocations("file:" + uploadAbsolutePath + "/");
     }
 }

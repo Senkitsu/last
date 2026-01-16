@@ -1,11 +1,9 @@
-// === FileStorageService.java === 
 package com.example.demo.service;
 
 import com.example.demo.model.File;
 import com.example.demo.model.User;
 import com.example.demo.repository.FileRepository;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -29,12 +27,15 @@ public class FileStorageService {
     private final List<String> allowedMimeTypes;
     private final List<String> allowedExtensions;
 
+    // ЗАМЕНА: убрали @Value, добавили константы
     public FileStorageService(
-            @Value("${file.allowed.mime-types}") String allowedMimeTypesConfig,
-            @Value("${file.allowed.extensions}") String allowedExtensionsConfig,
-            @Value("${file.upload-dir:uploads}") String uploadDir,
             FileRepository fileRepository,
             UserService userService) throws IOException {
+        
+        // Константы вместо @Value
+        String allowedMimeTypesConfig = "image/jpeg,image/png,image/gif,application/pdf,text/plain,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+        String allowedExtensionsConfig = "jpg,jpeg,png,gif,pdf,txt,doc,docx";
+        String uploadDir = "uploads";
         
         this.allowedMimeTypes = Arrays.asList(allowedMimeTypesConfig.split(","));
         this.allowedExtensions = Arrays.asList(allowedExtensionsConfig.split(","));
@@ -216,7 +217,6 @@ public class FileStorageService {
                 })
                 .orElse(false);
     }
-
 
     public String getContentType(Long fileId) {
         File file = getFile(fileId);

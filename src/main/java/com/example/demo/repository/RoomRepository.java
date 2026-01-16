@@ -11,7 +11,7 @@ import com.example.demo.model.Room;
 
 @Repository
 public interface RoomRepository extends JpaRepository<Room, Long>{
-    List<Room> findByLocationIgnoreCase(String location);
+    List<Room> findByBusIgnoreCase(String bus);
 
     @Query("SELECT r FROM Room r WHERE r.manager.id = :managerId")
     List<Room> findByManagerId(@Param("managerId") Long managerId);

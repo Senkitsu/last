@@ -18,7 +18,7 @@ public class RoomMapper {
         
         return new RoomDto(
             room.getId(),
-            room.getLocation(),
+            room.getBus(),
             room.getManager() != null ? 
                 new UserSimpleDto(
                     room.getManager().getId(),

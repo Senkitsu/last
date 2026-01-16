@@ -14,7 +14,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import com.example.demo.service.UserService;
-
 import com.example.demo.jwt.JwtAuthEntryPoint;
 import com.example.demo.jwt.JwtAuthFilter;
 
@@ -24,22 +23,23 @@ import lombok.RequiredArgsConstructor;
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
-    private static final String[] ALLOWED_URLS =
-    {"/swagger-ui/**", "/v3/api-docs/**", "/error", "/api/auth/**", 
-     "/api/auth/login", "/api/users/create-first", "/products"}; // ← ДОБАВЬТЕ /h2-console/**
+    
+    // ✅ Исправленные паттерны: /** для подпути, убраны запятые/мусор, /error явно
+    private static final String[] ALLOWED_URLS = {
+        "/", "/error", "/error/**", "/products/**", "/swagger-ui/**", "/v3/api-docs/**", 
+        "/api/auth/**", "/api/users/create-first", "/test/**"
+    }; 
 
     private final JwtAuthFilter jFilter;
     private final JwtAuthEntryPoint jPoint;
 
     @Bean
-    AuthenticationManager authenticationManager(
-        AuthenticationConfiguration configuration
-    ) throws Exception {
-       return configuration.getAuthenticationManager(); 
+    AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
+        return configuration.getAuthenticationManager(); 
     }
 
     @Bean
-    SecurityFilterChain securityFilterChain (HttpSecurity httpSecurity) throws Exception {
+    SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.csrf(AbstractHttpConfigurer::disable);
         httpSecurity.authorizeHttpRequests(authorize -> {
             // ✅ ПУБЛИЧНЫЕ ЭНДПОИНТЫ (без авторизации):
